@@ -72,8 +72,8 @@ def utconvthetae(r, rt, mass1, mass2, conc2):
 
     integral = np.concatenate((integral1, integral2))
 
-    integral1 = fastcorr.calc_corr(r[low], k, PutPthetae, N=8800, h=1e-6)
-    integral2 = fastcorr.calc_corr(r[high], k, PutPthetae, N=7700, h=1e-5)
+    #integral1 = fastcorr.calc_corr(r[low], k, PutPthetae, N=8800, h=1e-6)
+    #integral2 = fastcorr.calc_corr(r[high], k, PutPthetae, N=7700, h=1e-5)
 
     #integrall = np.concatenate((integral1, integral2))
 
