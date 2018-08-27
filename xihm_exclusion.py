@@ -172,9 +172,9 @@ def theta_errfunc(r, rt, beta):
 
 # Read xihm data
 down=10
-xihm = np.loadtxt('xihm1_3e12_5e12_z0.0_down10')
-covxihm = np.loadtxt('covxihm1_3e12_5e12_z0.0_down10')
-r = np.loadtxt('r')
+xihm = np.loadtxt('data/xihm1_3e12_5e12_z0.0_down10')
+covxihm = np.loadtxt('data/covxihm1_3e12_5e12_z0.0_down10')
+r = np.loadtxt('data/r')
 
 # Get 2halo term
 #xilin = fastcorr.calc_corr(r, k, Plin, N=500000, h=1e-4)
@@ -199,7 +199,7 @@ plt.loglog(r, r * r * model, linewidth=2, label=r'best fit', zorder=2)
 plt.xlabel(r'$r$', fontsize=24)
 plt.ylabel(r'$r^2 \xi_{hm}$', fontsize=24)
 plt.legend()
-plt.savefig('xihm.png')
+plt.savefig('figs/xihm.png')
 plt.clf()
 
 plt.axhline(0., color='black')
@@ -208,4 +208,4 @@ plt.fill_between(r, -np.sqrt(covxihm.diagonal())/xihm, np.sqrt(covxihm.diagonal(
 plt.ylim(-0.05, 0.13)
 plt.xlabel(r'$r$', fontsize=24)
 plt.ylabel(r'fractional difference', fontsize=24)
-plt.savefig('fracdif_xihm.png')
+plt.savefig('figs/fracdif_xihm.png')
