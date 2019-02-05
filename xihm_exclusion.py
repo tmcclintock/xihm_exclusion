@@ -2,6 +2,7 @@ import numpy as np
 import cluster_toolkit
 import fastcorr
 from colossus.halo.mass_so import M_to_R
+from colossus.halo.concentration import concentration
 from scipy.special import sici
 from scipy.special import erfc
 from scipy.interpolate import interp1d
@@ -13,12 +14,16 @@ rhocrit = 2.77536627e+11
 
 
 # Functions
-def xihm_model(r, rt, m, c, alpha, bias, ma, ca, mb, cb, xi2h, Om):
+def xihm_model(r, rt, m, c, alpha, bias, ma, mb, xi2h, Om):
     rhom = Om * rhocrit
 
     # Get xi1h
     xi1h = 1. + cluster_toolkit.xi.xi_nfw_at_R(r, 10**m, c, Om)
     xi1h *= thetat(r, rt, alpha)
+
+    # Get concentrations
+    ca = concentration(M=ma, mdef='200m', z=0.)
+    cb = concentration(M=mb, mdef='200m', z=0.)
 
     # Substract 1halo term
     r1 = M_to_R(m, z=0., mdef='200m')
