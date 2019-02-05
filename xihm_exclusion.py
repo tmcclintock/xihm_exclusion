@@ -1,22 +1,26 @@
 import numpy as np
 import cluster_toolkit
-import fastcorr
 from colossus.halo.mass_so import M_to_R
-from scipy.special import sici
 from scipy.special import erfc
+from scipy.interpolate import interp1d
+from scipy.integrate import quad
+from scipy.integrate import simps
+
+
+rhocrit = 2.77536627e+11
 
 
 # Functions
-def xihm_model(r, rt, m, c, beta, bias, ma, ca, mb, cb, ximm, Om):
+def xihm_model(r, rt, m, c, alpha, bias, ma, ca, mb, cb, ximm, Om):
     # Get xi1h
     xi1h = 1. + cluster_toolkit.xi.xi_nfw_at_R(r, 10**m, c, Om)
-    xi1h *= theta_errfunc(r, rt, beta)
+    xi1h *= thetat(r, rt, alpha)
 
     # Get xi2h
     xi2h = bias * ximm
 
     # Get correction
-    C = - bias * utconvthetae(r, rt, 10**m, 10**ma, ca) * ximm - utconvthetae(r, rt, 10**m, 10**mb, cb)
+    C = - bias * utconvthetae(r, rt, 10**m, alpha, 10**ma, ca, Om) * ximm - utconvthetae(r, rt, 10**m, alpha, 10**mb, cb, Om)
 
     # Full xi
     xi = xi1h + xi2h + C
@@ -24,7 +28,7 @@ def xihm_model(r, rt, m, c, beta, bias, ma, ca, mb, cb, ximm, Om):
     return xi
 
 
-def theta_errfunc(r, rt, beta):
+def thetat(r, rt, beta):
     return 0.5 * erfc((r-rt)/beta/np.sqrt(2.))
 
 
@@ -39,49 +43,42 @@ def re(r1, r2, scheme):
     return re
 
 
-def utconvthetae(r, rt, mass1, mass2, conc2):
+def utconvthetae(r, rt1, mass1, alpha, mass2, conc2, Om):
+    rhom = Om * rhocrit
+
     # Get proportions
-    r1 = M_to_R(mass1, z=0., mdef='200m') / 1000.
-    r2 = M_to_R(mass2, z=0., mdef='200m') / 1000.
-    rt1 = rt
-    constant = rt1 / r1
-    rt2 = constant * r2
+    r1 = M_to_R(mass1, z=0., mdef='200m')
+    r2 = M_to_R(mass2, z=0., mdef='200m')
+    rt2 = rt1 / r1 * r2
 
-    # Get ut(k)
-    # Analytic expression
-    k = np.logspace(-4, 4, num=1000, base=10)
-    rc = rt2 / conc2
-    mu = k * rc
-    delta200 = 200. / 3. * conc2 ** 3 / (np.log(1 + conc2) - conc2 / (1 + conc2))
-    Put = 3 * delta200 / 200. / conc2 ** 3 * (np.cos(mu) * (sici(mu + mu * conc2)[1] - sici(mu)[1]) +
-                                              np.sin(mu) * (sici(mu + mu * conc2)[0] - sici(mu)[0])
-                                              - np.sin(mu * conc2) / (mu + mu * conc2))
+    # Get ut(r)
+    rm = np.logspace(-3, 1.5, num=100, base=10)
+    ut_r = 1. + cluster_toolkit.xi.xi_nfw_at_R(rm, mass2, conc2, Om)
+    rho = interp1d(rm, 4 * np.pi * rm ** 2 * rhom * ut_r)
+    aux = quad(rho, rm[0], rt2, limit=200, epsrel=1e-3)
+    mass2t = aux[0]
+    ut_r *= thetat(rm, rt2, alpha) / mass2t * rhom
+    ut_r_interp = interp1d(rm, ut_r, fill_value=0, bounds_error=False)
 
-    # Get Pthetae
-    Re = re(rt1, rt2, scheme=1)
-    Pthetae = 4 * np.pi * (np.sin(k * Re) - k * Re * np.cos(k * Re)) / k ** 3
+    # Get thetaet(r)
+    Re = re(rt1, rt2, scheme=2)
+    thetat_r = thetat(rm, Re, alpha)
+    thetat_r_interp = interp1d(rm, thetat_r, fill_value=(1, 0), bounds_error=False)
 
-    # Product
-    PutPthetae = Put * Pthetae
+    # Double integral
+    integral = np.zeros(np.size(r))
+    u = np.linspace(-1, 1, num=10)
+    g_at_u = np.zeros_like(u)
+    j = 0
+    for ri in r:
+        i = 0
+        for ui in u:
+            def f(y):
+                return y * y * ut_r_interp(y) * thetat_r_interp(np.sqrt(ri * ri + y * y - 2 * ri * y * ui))
 
-    # Transform to real space
-    low = r < Re
-    high = r >= Re
-    integral1 = fastcorr.calc_corr(r[low], k, PutPthetae, N=8000, h=1e-6)
-    integral2 = fastcorr.calc_corr(r[high], k, PutPthetae, N=7000, h=1e-5)
-
-    integral = np.concatenate((integral1, integral2))
-
-    #integral1 = fastcorr.calc_corr(r[low], k, PutPthetae, N=8800, h=1e-6)
-    #integral2 = fastcorr.calc_corr(r[high], k, PutPthetae, N=7700, h=1e-5)
-
-    #integrall = np.concatenate((integral1, integral2))
-
-    #plt.semilogx(r, integral)
-    #plt.show()
-
-    #plt.semilogx(r, (integrall+1.)/(integral+1.) - 1.)
-    #plt.show()
-    #exit()
+            g_at_u[i] = simps(f(rm), rm, even='first')
+            i += 1
+        integral[j] = 2 * np.pi * simps(g_at_u, u, even='first')
+        j += 1
 
     return integral
