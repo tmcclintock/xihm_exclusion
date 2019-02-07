@@ -15,6 +15,25 @@ rhocrit = 2.77536627e+11
 
 # Functions
 def xihm_model(r, rt, m, c, alpha, bias, ma, mb, xi2h, Om):
+    """Our model for the halo-mass correlation function.
+
+    Args:
+        r (float or array like): 3d distances from halo center in Mpc/h comoving.
+        rt (float): Truncation radius. The boundary of the halo.
+        m (float): Mass in Msun/h.
+        c (float): Concentration.
+        alpha (float): Width parameter of the exclusion function.
+        bias (float): Large scale halo bias.
+        ma (float): Mass of the first correction term in Msun/h.
+        mb (float): Mass of the second correction term in Msun/h.
+        xi2h (float or array like): 2-halo term at r.
+        Om (float): Omega_matter.
+
+    Returns:
+        float or arraylike: Halo-mass correlation function.
+
+    """
+
     rhom = Om * rhocrit
 
     # Get xi1h
@@ -44,10 +63,34 @@ def xihm_model(r, rt, m, c, alpha, bias, ma, mb, xi2h, Om):
 
 
 def thetat(r, rt, alpha):
+    """Exclusion function. Error function.
+
+        Args:
+            r (float or array like): 3d distances from halo center in Mpc/h comoving.
+            rt (float): Truncation radius. The boundary of the halo.
+            alpha (float): Width parameter of the exclusion function.
+
+        Returns:
+            float or arraylike: Exclusion function.
+
+    """
+
     return 0.5 * erfc((r-rt)/alpha/rt/np.sqrt(2.))
 
 
-def re(r1, r2, scheme):
+def re(r1, r2, scheme=1):
+    """Exclusion radius given a percolation scheme. Default Rockstar is 1.
+
+            Args:
+                r1 (float): 3d distance from halo center in Mpc/h comoving.
+                r2 (float): 3d distance from halo center in Mpc/h comoving.
+                scheme (integer): Percolation scheme.
+
+            Returns:
+                float: Exclusion radius in Mpc/h comoving.
+
+    """
+
     if scheme == 1:
         re = max(r1, r2)
     elif scheme == 2:
@@ -59,6 +102,22 @@ def re(r1, r2, scheme):
 
 
 def utconvthetae(r, rt1, mass1, alpha, mass2, conc2, Om):
+    """Function that goes into the two correction terms. $(u_t \star \theta_e) (r | m1, m2)$.
+
+        Args:
+            r (float or array like): 3d distances from halo center in Mpc/h comoving.
+            rt1 (float): Truncation radius. The boundary of the halo.
+            mass1 (float): Mass in Msun/h.
+            alpha (float): Width parameter of the exclusion function.
+            mass2 (float): Mass in Msun/h.
+            conc2 (float): Concentration.
+            Om (float): Omega_matter.
+
+        Returns:
+            float or arraylike: $(u_t \star \theta_e) (r | m1, m2)$
+
+    """
+
     rhom = Om * rhocrit
 
     # Get proportions
@@ -100,6 +159,18 @@ def utconvthetae(r, rt1, mass1, alpha, mass2, conc2, Om):
 
 
 def utconvut(r, rt, conc):
+    """1-halo contribution to be substracted from the 2-halo term (ximm).
+
+            Args:
+                r (float or array like): 3d distances from halo center in Mpc/h comoving.
+                rt (float): Truncation radius. The boundary of the halo.
+                conc (float): Concentration.
+
+            Returns:
+                float or arraylike: 1-halo contribution.
+
+    """
+
     # Get ut(k)
     # Analytic expression
     k = np.logspace(-4, 4, num=1000, base=10)
