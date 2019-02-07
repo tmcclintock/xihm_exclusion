@@ -18,7 +18,7 @@ def xihm_model(r, rt, m, c, alpha, bias, ma, mb, xi2h, Om):
     rhom = Om * rhocrit
 
     # Get xi1h
-    xi1h = 1. + cluster_toolkit.xi.xi_nfw_at_R(r, 10**m, c, Om)
+    xi1h = 1. + cluster_toolkit.xi.xi_nfw_at_R(r, m, c, Om)
     xi1h *= thetat(r, rt, alpha)
 
     # Get concentrations
@@ -35,7 +35,7 @@ def xihm_model(r, rt, m, c, alpha, bias, ma, mb, xi2h, Om):
     xi2h = bias * xi2h
 
     # Get correction
-    C = - bias * utconvthetae(r, rt, 10**m, alpha, 10**ma, ca, Om) * xi2h - utconvthetae(r, rt, 10**m, alpha, 10**mb, cb, Om)
+    C = - utconvthetae(r, rt, m, alpha, ma, ca, Om) * xi2h - utconvthetae(r, rt, m, alpha, mb, cb, Om)
 
     # Full xi
     xi = xi1h + xi2h + C
@@ -43,8 +43,8 @@ def xihm_model(r, rt, m, c, alpha, bias, ma, mb, xi2h, Om):
     return xi
 
 
-def thetat(r, rt, beta):
-    return 0.5 * erfc((r-rt)/beta/np.sqrt(2.))
+def thetat(r, rt, alpha):
+    return 0.5 * erfc((r-rt)/alpha/rt/np.sqrt(2.))
 
 
 def re(r1, r2, scheme):
@@ -76,7 +76,7 @@ def utconvthetae(r, rt1, mass1, alpha, mass2, conc2, Om):
     ut_r_interp = interp1d(rm, ut_r, fill_value=0, bounds_error=False)
 
     # Get thetaet(r)
-    Re = re(rt1, rt2, scheme=2)
+    Re = re(rt1, rt2, scheme=1)
     thetat_r = thetat(rm, Re, alpha)
     thetat_r_interp = interp1d(rm, thetat_r, fill_value=(1, 0), bounds_error=False)
 
