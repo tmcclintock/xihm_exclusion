@@ -64,51 +64,33 @@ Pnl *= foxclass['h'] ** 3
 
 
 # Read xihm data
-################# Mbin 3e12-5e12 Msun/h #################
-xihm = np.loadtxt('data/xihm1_3e12_5e12_z0.0_down10')
-covxihm = np.loadtxt('data/covxihm1_3e12_5e12_z0.0_down10')
-r = np.loadtxt('data/r')
-
-# Parameters
-rt = 1.780
-m = 12.63
-c = 10.50
-beta = 0.2538
-bias = 0.8836
-ma = 12.39
-ca = 0.0444
-mb = 13.17
-cb = 1.239
-
-'''
 ################# Mbin 2e14-5e14 Msun/h #################
 xihm = np.loadtxt('data/xihm1_2e14_5e14_z0.0_down10')
 covxihm = np.loadtxt('data/covxihm1_2e14_5e14_z0.0_down10')
 r = np.loadtxt('data/r')
 
 # Parameters
-rt = 1.717
-m = 14.43
-c = 6.658
-beta = 0.4966
-bias = 2.762
-ma = 14.439
-ca = 0.1210
-mb = 12.51
-cb = 0.0318
-'''
+rt = 1.832
+m = 10**14.44
+c = 6.474
+alpha = 0.2955
+bias = 2.860
+ma = 10**14.45
+mb = 10**10.02
 
-# Get 2halo term
+
+# Get 2halo term, can be xilin, xinl, or ximm. Works better with ximm or xinl.
 # xilin = fastcorr.calc_corr(r, k, Plin, N=500000, h=1e-4)
-xinl = fastcorr.calc_corr(r, k, Pnl, N=500000, h=1e-4)
-xi2h = xinl
+# xinl = fastcorr.calc_corr(r, k, Pnl, N=500000, h=1e-4)
+ximm = np.loadtxt('data/ximm_z0.0_down10')
+xi2h = ximm
 
 
 # Get model
-model = xihm_exclusion.xihm_model(r, rt, m, c, beta, bias, ma, ca, mb, cb, xi2h, Om)
+model = xihm_exclusion.xihm_model(r, rt, m, c, alpha, bias, ma, mb, xi2h, Om)
 
 
-# Plot against data
+# Plot
 plt.errorbar(r, r * r * xihm, yerr=r * r * np.sqrt(covxihm.diagonal()), marker='o', linewidth=0, markersize=3, elinewidth=1, capsize=2, label=r'data', zorder=1)
 plt.loglog(r, r * r * model, linewidth=2, label=r'best fit', zorder=2)
 plt.xlabel(r'$r$', fontsize=24)
@@ -123,4 +105,5 @@ plt.fill_between(r, -np.sqrt(covxihm.diagonal())/xihm, np.sqrt(covxihm.diagonal(
 plt.ylim(-0.13, 0.05)
 plt.xlabel(r'$r$', fontsize=24)
 plt.ylabel(r'fractional difference', fontsize=24)
+plt.ylim(-0.15, 0.15)
 plt.savefig('figs/fracdif_xihm.png')
