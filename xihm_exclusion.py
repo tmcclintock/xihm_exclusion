@@ -143,17 +143,13 @@ def utconvthetae(r, rt1, mass1, alpha, mass2, conc2, Om):
     integral = np.zeros(np.size(r))
     u = np.linspace(-1, 1, num=10)
     g_at_u = np.zeros_like(u)
-    j = 0
-    for ri in r:
-        i = 0
-        for ui in u:
+    for j, ri in enumerate(r):
+        for i, ui in enumerate(u):
             def f(y):
                 return y * y * ut_r_interp(y) * thetat_r_interp(np.sqrt(ri * ri + y * y - 2 * ri * y * ui))
 
             g_at_u[i] = simps(f(rm), rm, even='first')
-            i += 1
         integral[j] = 2 * np.pi * simps(g_at_u, u, even='first')
-        j += 1
 
     return integral
 
